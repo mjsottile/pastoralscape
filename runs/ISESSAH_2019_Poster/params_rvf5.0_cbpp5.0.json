@@ -1,0 +1,103 @@
+{
+  "model": {
+    "setup": {
+        "cells": {
+            "initial_capacity": 0.0
+        },
+        "seed": 10,
+        "width": 57,
+        "height": 37,
+        "village_sep": 10,
+        "n_villages": 3,
+        "n_herdsmen": 100,
+        "n_hoh": 10,
+        "n_animals": 2000,
+        "pct_bull": 0.1,
+        "pct_vaccinated":
+            {
+                "rvf": 0.1,
+                "cbpp": 0.1
+            },
+        "age_sigma": 100,
+        "min_age": 78,
+        "start_date": "2004-01-01",
+        "end_date": "2015-01-01",
+        "time_delta_days": 7,
+        "ising":
+            {
+                "rvf": 0.7,
+                "cbpp": 0.8
+            }
+    },
+    "do_warmup": 0,
+    "seed_min": 1,
+    "seed_max": 50,
+    "disable_vaccination": 0
+},
+  "livestock": {
+      "initial_health": 0.75,
+      "min_breed_health": 0.5,
+
+      "gestation_period": 40,
+      "nursing_period": 8,
+
+      "maturity": 78,
+
+      "death_sigma": 52,
+      "death_mu": 520,
+
+      "breed_pscale": 0.05,
+      "breed_date_mu": 240,
+      "breed_date_sigma": 60,
+
+      "bull_probability": 0.4,
+
+      "eat": 1.0,
+      "health_fed": 0.025,
+      "health_starve": 0.025
+  },
+  "disease": {
+      "rvf": {
+          "wearoff": 1000000,
+          "p_si": 0.14,
+          "p_ir": 0.0001,
+          "p_id": 0.3,
+          "p_rs": 0.0,
+          "p_vs": 0.0
+      },
+      "cbpp": {
+          "wearoff": 24,
+          "p_si": 0.024,
+          "p_ir": 0.0045,
+          "p_id": 0.009,
+          "p_rs": 0.0,
+          "p_vs": 0.00091
+      }
+  },
+  "ising": {
+      "rvf": {
+          "beta": 5.0,
+          "mu": 1.0
+      },
+      "cbpp": {
+          "beta": 5.0,
+          "mu": 1.0
+      }
+  },
+  "agents": {
+      "speed": 1.0,
+      "visibility": 20.0,
+      "move_veg_threshold": 0.9
+  },
+  "rates": {
+      "constant_growth": 1.0,
+      "precip_growth": 1.0
+  },
+  "gis": {
+      "fileroot": "/Users/matt/OneDrive/WSU/livestock/data/ABM csv/",
+      "coordinates": "/Users/matt/OneDrive/WSU/livestock/data/ABM_GridCoordinates.csv",
+      "villages": "/Users/matt/OneDrive/WSU/livestock/data/villages.csv",
+      "waterbodies": "/Users/matt/OneDrive/WSU/livestock/data/waterbodies.csv",
+      "fci": "/Users/matt/OneDrive/WSU/livestock/data/SmaburuWest_FCI.csv"
+  }
+}
