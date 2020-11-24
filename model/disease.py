@@ -1,6 +1,32 @@
+###########################################################################
+# MIT License
+#
+# Copyright (c) 2020 Matthew Sottile
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation files
+# (the "Software"), to deal in the Software without restriction,
+# including without limitation the rights to use, copy, modify, merge,
+# publish, distribute, sublicense, and/or sell copies of the Software,
+# and to permit persons to whom the Software is furnished to do so,
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+# BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+# ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+# CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+###########################################################################
 import sys
-import numpy.random as rand
+import math
 from enum import Enum
+import numpy.random as rand
 
 # {{{ SIRV enum
 class SIRV(Enum):
@@ -15,18 +41,45 @@ class SIRV(Enum):
 
 # {{{ Single disease object 
 class Disease:
+  """ Class representing the transition system and infection model for a single
+      disease. 
+  """
 
   # {{{ constructor
-  def __init__(self, name, model_params):
+  def __init__(self, name, model_state, model_params):
     """ Disease object constructor.  A disease has a name and is given
         the model parameters.
     """
     self.name = name
     self.model_params = model_params
+    self.model_state = model_state
+  # }}}
+
+  # {{{ sample_infection
+  def sample_infection(self, time):
+    """ Test if a single infection (S->I) spontaneously occurs from environment
+        at given time.
+    """
+    if self.model_params['disease'][self.name]['new_infection_model'] == 'harmonic':
+      day = time.day_of_year()
+      b0 = self.model_params['disease'][self.name]['harmonic']['constant']
+      b1 = self.model_params['disease'][self.name]['harmonic']['cos']
+      b2 = self.model_params['disease'][self.name]['harmonic']['sin']
+      m = self.model_params['disease'][self.name]['harmonic']['m']
+      omega = 1.0 / m
+      p = math.exp(b0 + b1 * math.cos(2.0*math.pi*omega*day) + b2 * math.sin(2.0*math.pi*omega*day))
+      return rand.rand() < p
+    elif self.model_params['disease'][self.name]['new_infection_model'] == 'uniform':
+      p = self.model_params['disease'][self.name]['p_si_spontaneous']
+      return rand.rand() < p
+    else:
+      print("Unsupported infection model: "+self.model_params['disease'][self.name]['new_infection_model'])
+      exit()
+    return False
   # }}}
 
   # {{{ step
-  def step(self, herds, tracker, time):
+  def step(self, herds, time):
     """ One step.  The step applies the disease to one or more herds in
         a collection.  
     """
@@ -69,17 +122,19 @@ class Disease:
     p_rs = self.model_params['disease'][self.name]['p_rs']
     p_vs = self.model_params['disease'][self.name]['p_vs']
 
-    # probabilities are defined on weekly basis.  scale by timestep size.
-    p_si = p_si * time.step_size_weeks()
-    p_ir = p_ir * time.step_size_weeks()
-    p_id = p_id * time.step_size_weeks()
-    p_rs = p_rs * time.step_size_weeks()
-    p_vs = p_vs * time.step_size_weeks()
+    dt = time.current_step_duration()
+
+    # scale probabilities by timestep size vs timefactor that they are defined for
+    p_si = p_si * dt / self.model_params['model']['disease_timefactor']
+    p_ir = p_ir * dt / self.model_params['model']['disease_timefactor']
+    p_id = p_id * dt / self.model_params['model']['disease_timefactor']
+    p_rs = p_rs * dt / self.model_params['model']['disease_timefactor']
+    p_vs = p_vs * dt / self.model_params['model']['disease_timefactor']
 
     # step 2: model state transitions
     for animal in s:
       if rand.rand() < p_si:
-        animal.set_disease_state(self.name, SIRV.I, time)
+        animal.set_disease_state(self.name, SIRV.I)
     
     for animal in i:
       p = rand.rand()
@@ -88,23 +143,21 @@ class Disease:
 
         if p < p_id:
           # dead
-          tracker.disease_death(self.name)
-          animal.herd.remove(animal)
+          self.model_state.tracker.record_death(self.name, time.day_of_epoch())
+          animal.herd.cull(animal)
         else:
           # recovered
-          animal.set_disease_state(self.name, SIRV.R, time)
+          animal.set_disease_state(self.name, SIRV.R)
     
     for animal in r:
       if rand.rand() < p_rs:
-        animal.set_disease_state(self.name, SIRV.S, time)
+        animal.set_disease_state(self.name, SIRV.S)
     
     # only consider vs transition if there is a nonnegative p_vs.
     # set p_vs to negative value to suppress v->s transitions
     if p_vs > 0.0:
       for animal in v:
         if rand.rand() < p_vs:
-          animal.set_disease_state(self.name, SIRV.S, time)
-
+          animal.set_disease_state(self.name, SIRV.S)
   # }}}
-  
 # }}}
