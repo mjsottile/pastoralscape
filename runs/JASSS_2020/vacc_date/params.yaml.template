@@ -1,0 +1,153 @@
+#######################################################################
+## whole model parameters + setup parameters
+model:
+  seed_min: 11
+  seed_max: 112
+  disable_vaccination: 0
+  # disease time factor: how many days does p_XX cover
+  disease_timefactor: 1.0
+
+  setup:
+    seed: 6
+    width: 57
+    height: 37
+    n_hoh: 150
+    n_animals: 1500
+    pct_bull: 0.3
+    pct_vaccinated:
+      rvf: 0.1
+      cbpp: 0.1
+
+    # minimum age at start, and minimum days remaining in lifespan
+    min_age: 546
+    min_remain: 365
+
+    # model epoch
+    start_date: 2004-01-01
+    end_date: 2015-01-01
+
+    # primary time stepping loop for disease propagation and animal health
+    # updates
+    time_delta_days: 7
+
+    ising:
+      rvf: 
+        # probability of having a pre-existing +1 decision for each disease
+        prob_positive: 0.6
+        f_initial: 0.1
+
+      cbpp: 
+        prob_positive: 0.6
+        f_initial: 0.1
+
+#######################################################################
+## livestock submodel parameters
+livestock:
+  # health related parameters
+  initial_health: 0.9
+  min_breed_health: 0.5
+
+  # pregnancy and nursing parameters in days
+  gestation_period: 280
+  nursing_period: 56
+
+  # maturity when animal reaches fertility in days
+  maturity: 546
+
+  # mean/variance for lifespan in days
+  death_sigma: 365
+  death_mu: 3650
+
+  # breeding scale parameter
+  breed_pscale: 0.0075
+
+  # mean/variance day-of-year for peak likelihood of breeding
+  breed_date_mu: 240
+  breed_date_sigma: 60
+
+  # probability that offspring will be a bull
+  bull_probability: 0.47
+
+  # amount of vegetation units required by animal per day
+  eat: 1.0
+
+  # recovery and degradation of health parameters per day
+  health_fed: 0.003
+  health_starve: 0.003
+
+#######################################################################
+## SIRV model parameters for markov transition system w/ stochastic
+## spontaneous infection introduction and wearoff timing for vaccines
+## requiring boosters
+disease:
+  # rift valley fever
+  rvf:
+    # harmonic infection model with parameters fit via XXX
+    new_infection_model: harmonic
+    harmonic:
+      cos: 1.487041
+      sin: -1.610063
+      constant: -3.835099
+      m: 365
+    p_si: 0.14
+    p_ir: 0.0001
+    p_id: 0.3
+    p_rs: 0.0
+    p_vs: 0.0
+  
+  # contageous bovine pleuropneumonia
+  cbpp:
+    new_infection_model: uniform
+    p_si_spontaneous: 0.075
+    wearoff:
+      mu: 182
+      sigma: 28
+    p_si: 0.024
+    p_ir: 0.0045
+    p_id: 0.009
+    p_rs: 0.0
+    ## Note: p_vs set to zero to force event-based vaccine wearoff
+    #p_vs: 0.00091
+    p_vs: 0.0
+
+
+#######################################################################
+## RFIM model parameters from Bouchaud paper
+ising:
+  rvf:
+    beta: 0.1
+    mu: 0.5
+  cbpp:
+    beta: 0.1
+    mu: 0.5
+
+
+#######################################################################
+## human agent parameters
+agents:
+  # threshold for current cell veg capacity below which the agent decides to
+  # move
+  move_veg_threshold: 0.05
+
+  # F(t) for each individual disease for public sources of information
+  ising:
+    rvf:
+      f_public: 1.0
+    cbpp:
+      f_public: 1.0
+
+  # periodic vaccination schedule - twice per year: sept 5, and march 15
+  # vaccination_schedule: [ [9, 5], [3, 15] ]
+  vaccination_schedule: [ [9, 5] ]
+
+
+#######################################################################
+## static GIS data sets
+gis:
+  fileroot: "/Users/matt/iCloud/WSU/livestock/data/ABM csv/"
+  coordinates: "/Users/matt/iCloud/WSU/livestock/data/ABM_GridCoordinates.csv"
+  villages: "/Users/matt/iCloud/WSU/livestock/data/villages.csv"
+  waterbodies: "/Users/matt/iCloud/WSU/livestock/data/waterbodies.csv"
+  fci: "/Users/matt/iCloud/WSU/livestock/data/SmaburuWest_FCI.csv"
+  fcinew: "/Users/matt/iCloud/WSU/livestock/data/FCI_data_2003_2020.csv"
+  paths: "/Users/matt/iCloud/WSU/livestock/data/paths.csv"
